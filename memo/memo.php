@@ -24,7 +24,7 @@
     $stmt->execute();
 
     $stmt->bind_result($id, $memo, $created);
-    $stmt->fetch();
+    $result = $stmt->fetch();
     if (!$result) {
         echo '指定されたメモは見つかりませんでした';
         exit();
