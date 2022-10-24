@@ -1,9 +1,17 @@
 <?php
 require('dbconnect.php');
-$memos = $db->query('select * from memos order by id desc');
-if (!$memos) {
+$stmt = $db->prepare('select * from memos order by id desc limit ?,5');
+if (!$stmt) {
     die($db->error);
 }
+$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_NUMBER_INT);
+$page = ($page ?: 1);
+if (!$page) {
+    $page = 1;
+}
+$start = ($page - 1) * 5;
+$stmt->bind_param('i', $start);
+$result = $stmt->execute();
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -19,11 +27,13 @@ if (!$memos) {
     <h1>メモ帳</h1>
 
     <p>→ <a href="input.html">新しいメモ</a></p>
-
-    <?php while ($memo = $memos->fetch_assoc()) : ?>
+    <?php if (!$result): ?>
+        <p>表示するメモはありません</p>
+    <?php $stmt->bind_result($id, $memo, $created); ?>
+    <?php while ($stmt->fetch()) : ?>
         <div>
-            <h2><a href="memo.php?id=<?PHP echo $memo['id']; ?>"><?php echo htmlspecialchars(mb_substr($memo['memo'], 0, 50)); ?></a></h2>
-            <time><?php echo htmlspecialchars($memo['created_at']); ?></time>
+            <h2><a href="memo.php?id=<?PHP echo $id; ?>"><?php echo htmlspecialchars(mb_substr($memo, 0, 50)); ?></a></h2>
+            <time><?php echo htmlspecialchars($created); ?></time>
         </div>
         <hr>
     <?php endwhile; ?>
